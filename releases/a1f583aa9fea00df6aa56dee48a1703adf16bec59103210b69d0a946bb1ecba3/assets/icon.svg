@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256" role="img" aria-labelledby="title">
+  <title id="title">Trading Lab</title>
+  <rect width="256" height="256" rx="58" fill="#edf2f9"/>
+  <path d="M54 52v150h150" fill="none" stroke="#acc5e9" stroke-width="10" stroke-linecap="round"/>
+  <path d="m66 167 40-49 35 24 47-69" fill="none" stroke="#4775bc" stroke-width="16" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="106" cy="118" r="11" fill="#2b6abe"/>
+  <circle cx="141" cy="142" r="11" fill="#c48235"/>
+  <circle cx="188" cy="73" r="11" fill="#2b6abe"/>
+</svg>
