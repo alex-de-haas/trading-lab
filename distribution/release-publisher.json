@@ -1,0 +1,12 @@
+{
+  "schemaVersion": "trading-lab-publisher.0.1",
+  "repository": "alex-de-haas/trading-lab",
+  "appId": "com.haas.trading-lab",
+  "imageRepository": "ghcr.io/alex-de-haas/trading-lab",
+  "metadataBranch": "app-releases",
+  "sourceBranch": "main",
+  "feedId": "stable",
+  "platforms": ["linux/amd64", "linux/arm64"],
+  "ciWorkflow": ".github/workflows/ci.yml",
+  "ciJob": "ci-required"
+}

@@ -1,0 +1,13 @@
+.git
+.github
+node_modules
+dist
+data
+cache
+coverage
+.env
+.env.*
+.DS_Store
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal

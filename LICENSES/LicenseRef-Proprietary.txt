@@ -1,0 +1,8 @@
+LicenseRef-Proprietary
+
+No open-source license is granted for the Trading Lab application source.
+All rights remain reserved by the respective copyright holders. Public source
+availability and catalog membership do not grant additional rights.
+
+Third-party dependencies retain their own licenses. This notice does not
+change the licensing of any dependency.

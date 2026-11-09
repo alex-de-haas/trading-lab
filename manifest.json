@@ -2,20 +2,51 @@
   "schemaVersion": "app.0.1",
   "id": "com.haas.trading-lab",
   "name": "Trading Lab",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "runtimeProfiles": [
+    {
+      "key": "docker",
+      "type": "docker",
+      "default": true
+    },
     {
       "key": "dev",
       "type": "docker",
-      "development": true,
-      "default": true
+      "development": true
     }
   ],
-  "defaultRuntime": "dev",
+  "defaultRuntime": "docker",
   "services": [
     {
       "key": "web",
       "runtimes": {
+        "docker": {
+          "type": "docker",
+          "artifact": "image",
+          "image": {
+            "repository": "ghcr.io/alex-de-haas/trading-lab",
+            "tag": "0.2.0"
+          },
+          "environment": {
+            "PORT": "3000"
+          },
+          "ports": [
+            {
+              "key": "http",
+              "containerPort": 3000,
+              "protocol": "http",
+              "public": true
+            }
+          ],
+          "healthcheck": {
+            "type": "exec",
+            "command": "node -e \"fetch('http://127.0.0.1:3000/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\"",
+            "gracePeriodSeconds": 15,
+            "intervalSeconds": 10,
+            "timeoutSeconds": 5,
+            "retries": 3
+          }
+        },
         "dev": {
           "type": "docker",
           "image": {
@@ -32,8 +63,8 @@
             ]
           },
           "workingDirectory": ".",
-          "setup": "npm install --ignore-scripts --no-audit --no-fund --package-lock=false",
-          "command": "node --import tsx --watch server.ts",
+          "setup": "npm ci --ignore-scripts --no-audit --no-fund",
+          "command": "node --import tsx server.ts",
           "ports": [
             {
               "key": "http",
@@ -44,7 +75,7 @@
           ],
           "healthcheck": {
             "type": "exec",
-            "command": "node -e \u0022fetch(\u0027http://127.0.0.1:3000/healthz\u0027).then(r=\u003Eprocess.exit(r.ok?0:1)).catch(()=\u003Eprocess.exit(1))\u0022",
+            "command": "node -e \"fetch('http://127.0.0.1:3000/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\"",
             "gracePeriodSeconds": 90,
             "intervalSeconds": 10,
             "timeoutSeconds": 5,
@@ -67,11 +98,24 @@
     "entrypoint": {
       "endpoint": "http",
       "path": "/"
-    }
+    },
+    "navigation": [
+      {
+        "label": "Trading lab",
+        "path": "/"
+      }
+    ],
+    "icon": "chart-no-axes-combined"
   },
   "data": {
     "enabled": true,
     "targets": [
+      {
+        "runtime": "docker",
+        "service": "web",
+        "containerPath": "/app/data",
+        "environment": "HOSTY_APP_DATA_DIR"
+      },
       {
         "runtime": "dev",
         "service": "web",
@@ -80,5 +124,31 @@
       }
     ]
   },
-  "description": "Virtual stock trading experiments with replaceable market data providers and trailing reversal strategies."
+  "description": "Virtual stock trading experiments with replaceable market data providers and trailing reversal strategies.",
+  "catalogMetadata": {
+    "publisher": {
+      "name": "Alex de Haas",
+      "url": "https://github.com/alex-de-haas"
+    },
+    "category": "Utilities",
+    "tags": ["paper-trading", "simulation", "backtesting"],
+    "icon": "assets/icon.svg",
+    "license": "LicenseRef-Proprietary",
+    "links": {
+      "website": "https://github.com/alex-de-haas/trading-lab",
+      "docs": "https://github.com/alex-de-haas/trading-lab/blob/main/README.md"
+    },
+    "summary": "Virtual trading experiments with synthetic and imported history, trailing reversal rules, fees and transparent accounting.",
+    "descriptionFile": "docs/store.md"
+  },
+  "settings": [
+    {
+      "key": "TWELVE_DATA_API_KEY",
+      "type": "string",
+      "secret": true,
+      "required": false,
+      "label": "Twelve Data API key",
+      "description": "Optional. Enables real quotes and available history. Restart the app after changing this key."
+    }
+  ]
 }

@@ -1,68 +1,33 @@
-import { createServer, type IncomingMessage } from "node:http";
+import { createServer } from "node:http";
 import { readFile } from "node:fs/promises";
-import { build } from "esbuild";
-import { createHostySessionResponse } from "@hosty-sdk/app/session/server";
-import { createHostyUiResponse } from "@hosty-sdk/app/ui/server";
-import { readAppCredential, resolveAppSession, getAppRecoveryParams, exchangeLaunchCode } from "./auth.js";
-
-async function body(request: IncomingMessage, maxBytes = 65536) {
-  let text = "";
-  for await (const chunk of request) {
-    text += chunk.toString();
-    if (Buffer.byteLength(text) > maxBytes) throw new Error("Request too large.");
-  }
-  return JSON.parse(text || "{}");
+import { join } from "node:path";
+import { fileURLToPath } from "node:url";
+import { launchModeBootstrapScript } from "@hosty-sdk/app";
+import { Store } from "./src/store.js";
+import { TradingService } from "./src/service.js";
+import { createHandler } from "./src/http.js";
+declare const TRADING_LAB_PRODUCTION: boolean;
+// HOSTY_PORT_HTTP is the host-published port for Docker, not the container listener.
+const configuredPort=process.env.PORT??"3000",listenPort=Number(configuredPort);
+if(!/^\d+$/.test(configuredPort)||!Number.isInteger(listenPort)||listenPort<1||listenPort>65535)throw new Error("PORT must be an integer between 1 and 65535.");
+const dataRoot=process.env.HOSTY_APP_DATA_DIR;
+if(!dataRoot)throw new Error("HOSTY_APP_DATA_DIR is required. Start Trading Lab through Hosty.");
+const store=new Store(join(dataRoot,"trading.sqlite")),service=new TradingService(store);
+let client:string|Uint8Array,html=await readFile(new URL("./index.html",import.meta.url),"utf8");
+if(typeof TRADING_LAB_PRODUCTION!=="undefined"&&TRADING_LAB_PRODUCTION)client=await readFile(new URL("./client.js",import.meta.url));
+else{
+  const {build}=await import("esbuild");
+  const bundle=await build({entryPoints:[fileURLToPath(new URL("./client.tsx",import.meta.url))],bundle:true,write:false,format:"esm",jsx:"automatic",minify:true,define:{"process.env.NODE_ENV":'"production"'}});
+  client=bundle.outputFiles[0].contents;
+  html=html.replace("<!-- launch-mode -->",`<script>${launchModeBootstrapScript}</script>`);
 }
-createServer(async (request, response) => {
-  const url = new URL(request.url ?? "/", "http://" + request.headers.host);
-  const send = (status: number, value: unknown) => {
-    response.writeHead(status, { "content-type": "application/json", "cache-control": "no-store" });
-    response.end(JSON.stringify(value));
-  };
-  try {
-    if (request.method === "GET" && url.pathname === "/healthz") return send(200, { status: "ok" });
-    if (request.method === "GET" && ["/", "/client.js"].includes(url.pathname)) {
-      response.setHeader("cache-control", "no-store");
-      if (url.pathname === "/") {
-        response.setHeader("content-type", "text/html; charset=utf-8");
-        response.end(await readFile(new URL("./index.html", import.meta.url))); return;
-      }
-      const result = await build({ entryPoints: ["client.tsx"], bundle: true, write: false, format: "esm", jsx: "automatic", define: { "process.env.NODE_ENV": '"development"' } });
-      response.setHeader("content-type", "text/javascript; charset=utf-8");
-      response.end(result.outputFiles[0].contents); return;
-    }
-    if (request.method === "POST") {
-      const origin = request.headers.origin;
-      if (!origin || new URL(origin).host !== request.headers.host) return send(403, { message: "Same-origin request required." });
-    }
-    if (request.method === "POST" && url.pathname === "/api/auth/app-code") {
-      const input = await body(request);
-      const result = await exchangeLaunchCode(input.code, input.codeVerifier, request.headers["x-forwarded-proto"] === "https");
-      if (!result.ok) return send(result.status, result);
-      response.setHeader("set-cookie", result.setCookie);
-      return send(200, { accessToken: result.accessToken, expiresInSeconds: result.expiresInSeconds, activeUntil: result.activeUntil });
-    }
-    const token = readAppCredential(request);
-    const session = await resolveAppSession(token);
-    if (request.method === "GET" && url.pathname === "/api/auth/identity")
-      return send(200, { ...session, ...(session.status === "active" ? session.identity : {}), recovery: await getAppRecoveryParams() });
-    if (request.method === "GET" && url.pathname === "/api/hosty/session") {
-      const result = await createHostySessionResponse(session, await getAppRecoveryParams());
-      return send(result.status, await result.json());
-    }
-    if (url.pathname.startsWith("/api/hosty/ui/")) {
-      const result = await createHostyUiResponse(new Request(url, { method: request.method, headers: Object.fromEntries(Object.entries(request.headers).filter((entry): entry is [string, string] => typeof entry[1] === "string")),
-        body: request.method === "POST" ? JSON.stringify(await body(request, url.pathname.includes("/feedback") ? 12 * 1024 * 1024 : 65536)) : undefined }),
-        { session, token });
-      const bytes = Buffer.from(await result.arrayBuffer());
-      response.writeHead(result.status, Object.fromEntries(result.headers));
-      response.end(bytes); return;
-    }
-    if (session.status !== "active") return send(session.status === "forbidden" ? 403 : session.status === "unavailable" || session.status === "misconfigured" ? 503 : 401, { status: session.status });
-    if (request.method === "GET" && url.pathname === "/api/app") {
-      const manifest = JSON.parse(await readFile(new URL("./manifest.json", import.meta.url), "utf8"));
-      return send(200, { name: manifest.name, description: manifest.description });
-    }
-    send(404, { message: "Not found." });
-  } catch { send(503, { message: "Application is unavailable. Check its logs and retry." }); }
-}).listen(3000, "0.0.0.0");
+const assets=new Map([
+  ["/",{contentType:"text/html; charset=utf-8",body:html}],
+  ["/client.js",{contentType:"text/javascript; charset=utf-8",body:client}],
+  ["/style.css",{contentType:"text/css; charset=utf-8",body:await readFile(new URL("./style.css",import.meta.url),"utf8")}]
+]);
+service.recover();
+const server=createServer(createHandler(service,assets));
+const timer=setInterval(()=>{void service.tick().catch(()=>console.error("Market collection failed; retry scheduled."));},5000);
+server.listen(listenPort,"0.0.0.0",()=>console.log("Trading Lab ready on container port "+listenPort+"."));
+for(const signal of ["SIGINT","SIGTERM"] as const)process.on(signal,()=>{clearInterval(timer);server.close(()=>{store.close();process.exit(0);});setTimeout(()=>process.exit(0),5000).unref();});

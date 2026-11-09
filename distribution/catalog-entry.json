@@ -1,0 +1,12 @@
+{
+  "id": "com.haas.trading-lab",
+  "name": "Trading Lab",
+  "publisher": {
+    "name": "Alex de Haas",
+    "url": "https://github.com/alex-de-haas"
+  },
+  "category": "Utilities",
+  "license": "LicenseRef-Proprietary",
+  "tags": ["paper-trading", "simulation", "backtesting"],
+  "feedsUrl": "https://raw.githubusercontent.com/alex-de-haas/trading-lab/app-releases/feeds.json"
+}

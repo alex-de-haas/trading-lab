@@ -1,16 +1,30 @@
 {
-  "name": "hosty-local-app",
-  "version": "0.1.0",
+  "name": "hosty-trading-lab",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "scripts": {
-    "start": "node --import tsx --watch server.ts"
+    "start": "node dist/server.mjs",
+    "dev": "node --import tsx --watch server.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "node --import tsx --test tests/*.test.ts",
+    "build": "node scripts/build.mjs",
+    "docs:check": "node scripts/docs-index.mjs --check",
+    "release:check": "node scripts/check-release.mjs"
   },
   "dependencies": {
     "@hosty-sdk/app": "0.32.0",
     "esbuild": "0.25.12",
     "tsx": "4.23.15",
     "react": "19.3.0",
-    "react-dom": "19.3.0"
+    "react-dom": "19.3.0",
+    "decimal.js": "10.6.0",
+    "csv-parse": "6.1.0"
+  },
+  "devDependencies": {
+    "typescript": "~5.9.3",
+    "@types/node": "^24.0.0",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0"
   }
 }
