@@ -1,5 +1,5 @@
 ---
-status: Blocked
+status: In Progress
 created: 2026-11-07
 updated: 2026-11-09
 summary: Package Trading Lab as an immutable Docker release, verify it through Hosty, and publish its build pipeline and Marketplace feed.
@@ -76,8 +76,8 @@ its own version bump. Ordinary schemaVersion changes are not version bumps.
 - The current Publication tools connect an existing remote; hosted repository
   provisioning is not implemented by that feature. A new remote must first be
   created through an explicitly authorized provider workflow or by the operator.
-  GitHub returns 404 for the approved repository, which may mean it is absent or
-  inaccessible to that connection. The installed GitHub CLI has no login.
+  The operator created the approved public repository on 2026-11-09. Core
+  connected it and initialized main from the accepted bootstrap commit.
 - Set the first GHCR package to public after its initial push, then rerun the
   qualified release workflow. Anonymous verification intentionally blocks private
   packages before release retention or feed promotion.
@@ -108,28 +108,26 @@ The child used Core 0.176.3 and Shell 0.121.0. Native browser consumers exited,
 Finish succeeded, fresh status reports no process/data root, and the child-owned
 data directory is absent. Synthetic exports and screenshots remain outside Git.
 
-## Publication blockers
+## Publication status
 
 D4 remains open because the catalog has no registered source workspace available
 to this client. Its schema and contribution rules were read; the reviewed entry,
 icon and store description are prepared in this repository, not submitted.
 
-D6 remains open because access to the approved public repository is unresolved.
-On 2026-11-09, Core 0.178.1 successfully inspected the registered workspace's
-remote state, but `remote_connect` returned `source_access_required` with
-`Authenticated Git operation failed`. GitHub returned 404 for the repository;
-that response does not establish whether it is absent or merely inaccessible.
-No available typed provider tool creates repositories, and `gh api user` exits
-with code 4 because the local GitHub CLI is not signed in. The operator permits
-terminal publication as a fallback, but that route has no configured login.
-Ensure the repository exists and grant the publishing account access, or configure
-an authorized publishing login, before retrying remote association and publication.
+D6 is in progress. Core verified local implementation commit `a58bfc5` and a clean
+worktree on 2026-11-09. The approved public repository is accessible, remote
+association succeeded, and its main branch contains accepted bootstrap commit
+`0059111`. The feature changes remain on the registered feature branch; publication
+configuration requires `ci-required` on the exact merge commit. Hosted CI,
+production image and feed availability, and catalog submission still require
+their own observed results before this deliverable can be checked.
 
-The earlier local-commit contract and Source-override blockers are resolved:
-`commit_workspace` now accepts `reviewId`, and remote inspection works without
-changing ordinary app execution. Local commit success still requires its own
-Core observation. No remote push, PR, merge, feed or catalog publication is
-attested by local verification.
+Core 0.178.1 resolves the earlier local-commit contract and Source-override
+blockers: `commit_workspace` accepts `reviewId`, and remote operations work without
+changing ordinary app execution. The release workflow has no numeric provider ID
+until GitHub registers it. Publication completion does not substitute for the
+release and feed verification required above; its policy can be amended explicitly
+once that workflow is available. Merge remains a separate operator decision.
 
 On completion, update feature documentation to the verified behavior, delete this
 plan, regenerate docs/root.md, and keep publication and sandbox cleanup evidence

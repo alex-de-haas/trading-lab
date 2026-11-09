@@ -1,14 +1,14 @@
 ---
 created: 2026-11-07
-updated: 2026-11-07
+updated: 2026-11-09
 summary: Production Docker packaging, exact-source CI and an immutable stable-feed publisher for Trading Lab, with prepared Marketplace assets.
 ---
 
 # Marketplace release
 
 Trading Lab 0.2.0 has production Docker packaging and a repository-owned GitHub
-Actions release pipeline configured for `alex-de-haas/trading-lab`. External source,
-image, feed and catalog publication are not verified. The remaining delivery work
+Actions release pipeline configured for `alex-de-haas/trading-lab`. External image,
+feed and catalog publication are not verified. The remaining delivery work
 is tracked in the [release plan](plan.md).
 
 ## Runtime package
