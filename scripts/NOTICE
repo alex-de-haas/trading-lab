@@ -1,0 +1,19 @@
+Release tooling and shared documentation validators incorporate Hosty sources:
+https://github.com/alex-de-haas/docker-host
+Baseline source commit: 9d370e089cfe57600bb2de431e17d6ddd0c887be
+
+Copied/adapted release modules:
+  scripts/releases/metadata.mjs
+  scripts/releases/registry.mjs
+  scripts/releases/context.mjs (selected helpers)
+  scripts/releases/assets.mjs (asset collection)
+  scripts/releases/model.mjs (release model)
+
+Byte-identical shared validators:
+  scripts/docs-index.mjs
+  scripts/docs-format.mjs
+
+The upstream sources retain GNU Affero General Public License version 3 terms.
+The complete upstream license is retained in scripts/releases/LICENSE.
+This notice does not replace or remove those terms and does not grant a new
+license for the separately authored Trading Lab application.

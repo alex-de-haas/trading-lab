@@ -1,0 +1,14 @@
+import { build } from "esbuild";
+import { mkdir, readFile, copyFile, writeFile } from "node:fs/promises";
+import { fileURLToPath } from "node:url";
+import { resolve, join } from "node:path";
+import { launchModeBootstrapScript } from "@hosty-sdk/app";
+const root=fileURLToPath(new URL("../",import.meta.url));
+const outdir=resolve(process.argv[2]??join(root,"dist"));
+await mkdir(outdir,{recursive:true});
+await build({absWorkingDir:root,entryPoints:["client.tsx"],outfile:join(outdir,"client.js"),bundle:true,format:"esm",jsx:"automatic",minify:true,define:{"process.env.NODE_ENV":'"production"'}});
+await build({absWorkingDir:root,entryPoints:["server.ts"],outfile:join(outdir,"server.mjs"),bundle:true,platform:"node",target:"node24",format:"esm",packages:"external",minifySyntax:true,define:{TRADING_LAB_PRODUCTION:"true"}});
+const html=(await readFile(join(root,"index.html"),"utf8")).replace("<!-- launch-mode -->",`<script>${launchModeBootstrapScript}</script>`);
+await writeFile(join(outdir,"index.html"),html);
+await Promise.all(["style.css","manifest.json"].map(name=>copyFile(join(root,name),join(outdir,name))));
+console.log("Production assets written to "+outdir+".");
